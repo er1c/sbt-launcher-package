@@ -18,7 +18,8 @@ set _JAVACMD=
 set _SBT_OPTS=
 set _JAVA_OPTS=
 
-set init_sbt_version=_to_be_replaced
+rem set init_sbt_version=_to_be_replaced
+set init_sbt_version=1.3.0
 set sbt_default_mem=1024
 set default_sbt_opts=
 set default_java_opts=-Dfile.encoding=UTF-8
@@ -28,8 +29,11 @@ set sbt_args_print_sbt_version=
 set sbt_args_print_sbt_script_version=
 set sbt_args_verbose=
 set sbt_args_debug=
+set sbt_args_batch=
 set sbt_args_color=
 set sbt_args_no_colors=
+set sbt_args_no_global=
+set sbt_args_no_share=
 set sbt_args_ivy=
 set sbt_args_supershell=
 set sbt_args_timings=
@@ -135,12 +139,30 @@ if defined _version_arg (
   goto args_loop
 )
 
+if "%~0" == "-batch" set _batch_arg=true
+if "%~0" == "--batch" set _batch_arg=true
+
+if defined _batch_arg (
+  set _batch_arg=
+  set sbt_args_batch=1
+  goto args_loop
+)
+
 if "%~0" == "-no-colors" set _no_colors_arg=true
 if "%~0" == "--no-colors" set _no_colors_arg=true
 
 if defined _no_colors_arg (
   set _no_colors_arg=
   set sbt_args_no_colors=1
+  goto args_loop
+)
+
+if "%~0" == "-no-global" set _no_global_arg=true
+if "%~0" == "--no-global" set _no_global_arg=true
+
+if defined _no_global_arg (
+  set _no_global_arg=
+  set sbt_args_no_global=1
   goto args_loop
 )
 
@@ -278,6 +300,15 @@ if defined _color_arg (
   goto args_loop
 )
 
+if "%~0" == "--no-share" set _no_share_arg=true
+if "%~0" == "-no-share" set _no_share_arg=true
+
+if defined _no_share_arg (
+  set _no_share_arg=
+  set sbt_args_no_share=1
+  goto args_loop
+)
+
 if "%~0" == "--timings" set _timings_arg=true
 if "%~0" == "-timings" set _timings_arg=true
 
@@ -411,6 +442,14 @@ rem set arguments
 
 if defined sbt_args_no_colors (
   set _SBT_OPTS=-Dsbt.log.noformat=true !_SBT_OPTS!
+)
+
+if defined sbt_args_no_global (
+  set _SBT_OPTS=-Dsbt.global.base=project/.sbtboot !_SBT_OPTS!
+)
+
+if defined sbt_args_no_share (
+  set _SBT_OPTS=-Dsbt.global.base=project/.sbtboot -Dsbt.boot.directory=project/.boot -Dsbt.ivy.home=project/.ivy !_SBT_OPTS!
 )
 
 if defined sbt_args_supershell (
@@ -597,8 +636,11 @@ for /f "tokens=3" %%g in ('"!_JAVACMD!" -Xms32M -Xmx32M -version 2^>^&1 ^| finds
   set JAVA_VERSION=%%g
 )
 
+echo JAVA_VERIOSN: !JAVA_VERSION!
 rem removes all quotes from JAVA_VERSION
 set JAVA_VERSION=!JAVA_VERSION:"=!
+
+echo JAVA_VERIOSN after quotes: !JAVA_VERSION!
 
 for /f "delims=.-_ tokens=1-2" %%v in ("!JAVA_VERSION!") do (
   if /I "%%v" EQU "1" (
@@ -607,6 +649,9 @@ for /f "delims=.-_ tokens=1-2" %%v in ("!JAVA_VERSION!") do (
     set JAVA_VERSION=%%v
   )
 )
+
+echo JAVA_VERIOSN after delims: !JAVA_VERSION!
+
 exit /B 0
 
 :checkjava
@@ -652,7 +697,7 @@ set PRELOAD_SBT_JAR="%UserProfile%\.sbt\preloaded\org\scala-sbt\sbt\!init_sbt_ve
 if /I !JAVA_VERSION! GEQ 8 (
   where robocopy >nul 2>nul
   if %ERRORLEVEL% EQU 0 (
-    REM echo !PRELOAD_SBT_JAR!
+    echo !PRELOAD_SBT_JAR!
     if not exist !PRELOAD_SBT_JAR! (
       if exist "!SBT_HOME!\lib\local-preloaded\" (
         robocopy "!SBT_HOME!\lib\local-preloaded" "%UserProfile%\.sbt\preloaded" /E
@@ -689,11 +734,11 @@ echo   --sbt-dir   ^<path^>  path to global settings/plugins directory ^(default
 echo   --sbt-boot  ^<path^>  path to shared boot directory ^(default: ~/.sbt/boot in 0.11 series^)
 echo   --ivy       ^<path^>  path to local Ivy repository ^(default: ~/.ivy2^)
 echo   --mem    ^<integer^>  set memory options ^(default: %sbt_default_mem%^)
-rem echo   --no-share          use all local caches; no sharing
-rem echo   --no-global         uses global caches, but does not use global ~/.sbt directory.
-rem echo   --jvm-debug ^<port^>  enable on JVM debugging, open at the given port.
+echo   --no-share          use all local caches; no sharing
+echo   --no-global         uses global caches, but does not use global ~/.sbt directory.
+echo   --jvm-debug ^<port^>  enable on JVM debugging, open at the given port.
 rem echo   --batch             disable interactive mode
-rem echo.
+echo.
 echo   # sbt version ^(default: from project/build.properties if present, else latest release^)
 echo   --sbt-version  ^<version^>   use the specified version of sbt
 rem echo   --sbt-jar      ^<path^>      use the specified jar as the sbt launcher

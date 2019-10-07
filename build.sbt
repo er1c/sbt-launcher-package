@@ -249,7 +249,8 @@ lazy val integrationTest = (project in file("integration-test"))
     libraryDependencies ++= Seq(
       "io.monix" %% "minitest" % "2.3.2" % Test,
       "com.eed3si9n.expecty" %% "expecty" % "0.11.0" % Test,
-      "org.scala-sbt" %% "io" % "1.3.1" % Test
+      "org.scala-sbt" %% "io" % "1.3.1" % Test,
+      "commons-io" % "commons-io" % "2.5" % Test
     ),
     testFrameworks += new TestFramework("minitest.runner.Framework")
   )
