@@ -135,7 +135,7 @@ object SbtRunnerTest extends SimpleTestSuite with PowerAssertions {
     }
     ()
   }
-/*
+
   test("sbt -V|-version|--version should print sbtVersion") {
     val (ret, out) = sbtProcessWithOpts("-version", "", "")
     assert(ret == 0)
@@ -170,6 +170,4 @@ object SbtRunnerTest extends SimpleTestSuite with PowerAssertions {
     assert(out.mkString("\n").trim.matches(expectedVersion))
     ()
   }
-
- */
 }
