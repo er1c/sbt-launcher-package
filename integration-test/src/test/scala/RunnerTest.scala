@@ -107,51 +107,55 @@ object SbtRunnerTest extends SimpleTestSuite with PowerAssertions {
   }
 
   test("sbt with -mem 503, -Xmx in SBT_OPTS") {
+    if (isWindows) cancel("Test not supported on windows")
+
     val (ret, out) = sbtProcessWithOpts("compile -mem 503 -v", "", "-Xmx1024m")
     assert(ret == 0)
     assert(out.contains[String]("-Xmx503m"))
-    assert(!out.contains[String]("-Xms1024m"))
+    assert(!out.contains[String]("-Xmx1024m"))
     ()
   }
 
-  test("sbt with -Xms2048M -Xmx2048M -Xss6M in SBT_OPTS") {
-    if (!isWindows) {
-      val (ret, out) = sbtProcessWithOpts("compile -v", "", "-Xms2048M -Xmx2048M -Xss6M")
-      assert(out.contains[String]("-Xss6M"))
-    } else {
-      assert(true)
-    }
+  test(s"sbt with -Xms2048M -Xmx2048M -Xss6M in SBT_OPTS") {
+    if (isWindows) cancel("Test not supported on windows")
+
+    val (ret, out) = sbtProcessWithOpts("compile -v", "", "-Xms2048M -Xmx2048M -Xss6M")
+    assert(out.contains[String]("-Xss6M"))
     ()
   }
 
   test("sbt with --no-colors in SBT_OPTS") {
-    if (!isWindows) {
-      throw new Exception("oh WTF")
-      val (ret, out) = sbtProcessWithOpts("compile -v", "", "--no-colors")
-      assert(ret == 0)
-      assert(out.contains[String]("-Dsbt.log.noformat=true"))
-    } else {
-      assert(true)
-    }
+    if (isWindows) cancel("Test not supported on windows")
+
+    val (ret, out) = sbtProcessWithOpts("compile -v", "", "--no-colors")
+    assert(ret == 0)
+    assert(out.contains[String]("-Dsbt.log.noformat=true"))
     ()
   }
 
-  test("sbt -V|-version|--version should print sbtVersion") {
+  private val expectedSbtVersion =
+    s"""|(?m)^sbt version in this project: $versionRegEx
+        |sbt script version: $versionRegEx$$
+        |""".stripMargin.trim.replace("\n", "\\n")
+
+  test("sbt -version should print sbtVersion") {
     val (ret, out) = sbtProcessWithOpts("-version", "", "")
     assert(ret == 0)
-    val expectedVersion =
-      s"""|(?m)^sbt version in this project: $versionRegEx
-          |sbt script version: $versionRegEx$$
-          |""".stripMargin.trim.replace("\n", "\\n")
-    assert(out.mkString("\n").trim.matches(expectedVersion))
+    assert(out.mkString("\n").trim.matches(expectedSbtVersion))
+    ()
+  }
 
-    val (ret2, out2) = sbtProcessWithOpts("--version", "", "")
-    assert(ret2 == 0)
-    assert(out2.mkString("\n").trim.matches(expectedVersion))
+  test("sbt --version should print sbtVersion") {
+    val (ret, out) = sbtProcessWithOpts("--version", "", "")
+    assert(ret == 0)
+    assert(out.mkString("\n").trim.matches(expectedSbtVersion))
+    ()
+  }
 
-    val (ret3, out3) = sbtProcessWithOpts("-V", "", "")
-    assert(ret3 == 0)
-    assert(out3.mkString("\n").trim.matches(expectedVersion))
+  test("sbt -V should print sbtVersion") {
+    val (ret, out) = sbtProcessWithOpts("-V", "", "")
+    assert(ret == 0)
+    assert(out.mkString("\n").trim.matches(expectedSbtVersion))
     ()
   }
 

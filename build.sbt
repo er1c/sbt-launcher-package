@@ -252,6 +252,9 @@ lazy val integrationTest = (project in file("integration-test"))
       "org.scala-sbt" %% "io" % "1.3.1" % Test,
       "commons-io" % "commons-io" % "2.5" % Test
     ),
+    fork in Test := true,
+    parallelExecution in Test := false,
+    baseDirectory in (Test) := file("."),
     testFrameworks += new TestFramework("minitest.runner.Framework")
   )
 
