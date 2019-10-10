@@ -493,26 +493,33 @@ rem TODO: _SBT_OPTS needs to be processed as args and diffed against SBT_ARGS
 
 if !sbt_args_print_sbt_script_version! equ 1 (
   echo !init_sbt_version!
-) else if !sbt_args_print_sbt_version! equ 1 (
+  goto :eof
+)
+
+if !sbt_args_print_sbt_version! equ 1 (
   call :set_sbt_version
   echo !sbt_version!
-) else if !sbt_args_print_version! equ 1 (
+  goto :eof
+)
+
+if !sbt_args_print_version! equ 1 (
   call :set_sbt_version
   echo sbt version in this project: !sbt_version!
   echo sbt script version: !init_sbt_version!
-) else (
-  if defined sbt_args_verbose (
-    echo # Executing command line:
-    echo "!_JAVACMD!"
-    if defined _JAVA_OPTS ( call :echolist !_JAVA_OPTS! )
-    if defined _SBT_OPTS ( call :echolist !_SBT_OPTS! )
-    echo -cp "!SBT_HOME!\bin\sbt-launch.jar" xsbt.boot.Boot
-    if defined %* ( call :echolist %* )
-    echo.
-  )
-
-  "!_JAVACMD!" !_JAVA_OPTS! !_SBT_OPTS! -cp "!SBT_HOME!\bin\sbt-launch.jar" xsbt.boot.Boot %*
+  goto :eof
 )
+
+if defined sbt_args_verbose (
+  echo # Executing command line:
+  echo "!_JAVACMD!"
+  if defined _JAVA_OPTS ( call :echolist !_JAVA_OPTS! )
+  if defined _SBT_OPTS ( call :echolist !_SBT_OPTS! )
+  echo -cp "!SBT_HOME!\bin\sbt-launch.jar" xsbt.boot.Boot
+  if defined %* ( call :echolist %* )
+  echo.
+)
+
+"!_JAVACMD!" !_JAVA_OPTS! !_SBT_OPTS! -cp "!SBT_HOME!\bin\sbt-launch.jar" xsbt.boot.Boot %*
 
 goto :eof
 
@@ -635,11 +642,8 @@ for /f "tokens=3" %%g in ('"!_JAVACMD!" -Xms32M -Xmx32M -version 2^>^&1 ^| finds
   set JAVA_VERSION=%%g
 )
 
-echo JAVA_VERIOSN: !JAVA_VERSION!
 rem removes all quotes from JAVA_VERSION
 set JAVA_VERSION=!JAVA_VERSION:"=!
-
-echo JAVA_VERIOSN after quotes: !JAVA_VERSION!
 
 for /f "delims=.-_ tokens=1-2" %%v in ("!JAVA_VERSION!") do (
   if /I "%%v" EQU "1" (
@@ -648,8 +652,6 @@ for /f "delims=.-_ tokens=1-2" %%v in ("!JAVA_VERSION!") do (
     set JAVA_VERSION=%%v
   )
 )
-
-echo JAVA_VERIOSN after delims: !JAVA_VERSION!
 
 exit /B 0
 
@@ -696,7 +698,6 @@ set PRELOAD_SBT_JAR="%UserProfile%\.sbt\preloaded\org\scala-sbt\sbt\!init_sbt_ve
 if /I !JAVA_VERSION! GEQ 8 (
   where robocopy >nul 2>nul
   if %ERRORLEVEL% EQU 0 (
-    echo !PRELOAD_SBT_JAR!
     if not exist !PRELOAD_SBT_JAR! (
       if exist "!SBT_HOME!\lib\local-preloaded\" (
         robocopy "!SBT_HOME!\lib\local-preloaded" "%UserProfile%\.sbt\preloaded" /E
@@ -770,7 +771,7 @@ exit /B 1
 
 :set_sbt_version
 rem print sbtVersion
-for /F "usebackq tokens=2" %%G in (`CALL "!_JAVACMD!" !JAVA_OPTS! !_SBT_OPTS! -cp "!SBT_HOME!\bin\sbt-launch.jar" xsbt.boot.Boot "sbtVersion" 2^>^&1`) do set "sbt_version=%%G"
+for /F "usebackq tokens=2" %%G in (`CALL "!_JAVACMD!" -jar "!SBT_HOME!\bin\sbt-launch.jar" "sbtVersion" 2^>^&1`) do set "sbt_version=%%G"
 exit /B 0
 
 :error
